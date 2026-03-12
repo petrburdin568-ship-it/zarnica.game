@@ -1,4 +1,4 @@
-const qs = (sel, root = document) => root.querySelector(sel);
+﻿const qs = (sel, root = document) => root.querySelector(sel);
 
 const MODE_LABELS = {
   mode1: "Режим 1",
@@ -24,10 +24,7 @@ function loadState(mode) {
       score: Number.isFinite(parsed.score) ? parsed.score : 0,
       used: parsed.used && typeof parsed.used === "object" ? parsed.used : {},
       quizSig: typeof parsed.quizSig === "string" ? parsed.quizSig : "",
-      completedCats:
-        parsed.completedCats && typeof parsed.completedCats === "object"
-          ? parsed.completedCats
-          : {},
+      completedGame: Boolean(parsed.completedGame),
     };
   } catch {
     return { score: 0, used: {}, quizSig: "" };
@@ -175,18 +172,50 @@ async function loadQuiz(mode) {
 }
 
 function fmtScore(n) {
-  return n >= 0 ? String(n) : `−${Math.abs(n)}`;
+  return n >= 0 ? String(n) : `-${Math.abs(n)}`;
 }
 
-function isAllThrees(n) {
-  const s = String(Math.abs(n));
-  return /^3+$/.test(s);
+function easterMessages(score) {
+  const abs = Math.abs(score);
+  const msgs = [];
+
+  if (abs === 300 || abs === 3000) {
+    msgs.push("TU TU TU DU MAX VERSTAPPEN");
+  }
+
+  return msgs;
 }
 
 function normUsedValue(v) {
   // Old saves: boolean true. New saves: number delta (+value / -value).
   if (typeof v === "number" && Number.isFinite(v)) return v;
   return 0;
+}
+
+function questionValue(catIndex, qIndex, q) {
+  const raw = q?.value;
+  if (typeof raw === "number" && Number.isFinite(raw)) return raw;
+  // Default scoring: 100, 200, 300... per row.
+  return (qIndex + 1) * 100;
+}
+
+function maxPossibleScore(quiz) {
+  const cats = Array.isArray(quiz?.categories) ? quiz.categories : [];
+  let sum = 0;
+  for (let catIndex = 0; catIndex < cats.length; catIndex++) {
+    const qList = Array.isArray(cats[catIndex]?.questions) ? cats[catIndex].questions : [];
+    for (let qIndex = 0; qIndex < qList.length; qIndex++) {
+      const q = qList[qIndex];
+      sum += questionValue(catIndex, qIndex, q);
+    }
+  }
+  return sum;
+}
+
+function randomChoice(items) {
+  if (!Array.isArray(items) || items.length === 0) return "";
+  const idx = Math.floor(Math.random() * items.length);
+  return items[idx] ?? "";
 }
 
 async function main() {
@@ -215,6 +244,7 @@ async function main() {
   const resultDelta = qs("#resultDelta");
   const resultTotal = qs("#resultTotal");
   const resultEaster = qs("#resultEaster");
+  const toast = qs("#toast");
 
   modeTitle.textContent = MODE_LABELS[mode] || mode;
 
@@ -244,66 +274,75 @@ async function main() {
     state.score = 0;
     state.used = {};
     state.quizSig = sig;
-    state.completedCats = {};
+    state.completedGame = false;
     saveState(mode, state);
     scoreValue.textContent = fmtScore(0);
   }
 
   let active = null;
-  let pendingCatCheck = null;
 
-  const categoryMetrics = (catIndex) => {
-    const cat = quiz.categories?.[catIndex];
-    const qList = Array.isArray(cat?.questions) ? cat.questions : [];
+  const gameMetrics = () => {
+    const cats = Array.isArray(quiz?.categories) ? quiz.categories : [];
+    let total = 0;
     let answered = 0;
     let plusCount = 0;
     let minusCount = 0;
     let delta = 0;
-    for (let qIndex = 0; qIndex < qList.length; qIndex++) {
-      const id = `${catIndex}:${qIndex}`;
-      if (!state.used[id]) continue;
-      answered++;
-      const d = normUsedValue(state.used[id]);
-      delta += d;
-      if (d > 0) plusCount++;
-      if (d < 0) minusCount++;
+
+    for (let catIndex = 0; catIndex < cats.length; catIndex++) {
+      const qList = Array.isArray(cats[catIndex]?.questions)
+        ? cats[catIndex].questions
+        : [];
+      for (let qIndex = 0; qIndex < qList.length; qIndex++) {
+        total++;
+        const id = `${catIndex}:${qIndex}`;
+        const usedVal = state.used[id];
+        if (!usedVal) continue;
+        answered++;
+        const d = normUsedValue(usedVal);
+        delta += d;
+        if (d > 0) plusCount++;
+        if (d < 0) minusCount++;
+      }
     }
-    return {
-      name: cat?.name ?? "",
-      total: qList.length,
-      answered,
-      plusCount,
-      minusCount,
-      delta,
-    };
+
+    return { total, answered, plusCount, minusCount, delta };
   };
 
-  const achievementFor = (m) => {
-    if (m.total === 0) return "Раздел пустой";
+  const gameAchievement = (m) => {
+    if (m.total === 0) return "Пустая игра";
     if (m.answered < m.total) return "В процессе";
-    const maxPossible = (m.total * (m.total + 1)) / 2 * 100;
-    if (m.minusCount === 0 && m.delta === maxPossible) return "Идеальный раунд";
+    const maxPossible = maxPossibleScore(quiz);
+    if (m.minusCount === 0 && m.delta === maxPossible) {
+      return randomChoice(["Невозможное возможно", "Искусственный интеллект"]);
+    }
     if (m.minusCount === 0) return "Чистая победа";
     if (m.plusCount === 0) return "Суровый урок";
     if (m.delta < 0) return "Тяжелая полоса";
     return "Боевой зачет";
   };
 
-  const showCategoryResult = (catIndex) => {
-    const m = categoryMetrics(catIndex);
-    resultCat.textContent = m.name || "Раздел";
-    resultAch.textContent = achievementFor(m);
+  const showGameResult = () => {
+    const m = gameMetrics();
+    const title = quiz?.title ? `· ${quiz.title}` : "";
+    resultCat.textContent = `${MODE_LABELS[mode] || mode} ${title}`.trim();
+    resultAch.textContent = gameAchievement(m);
     resultCount.textContent = `${m.answered}/${m.total}`;
-    resultDelta.textContent = fmtScore(m.delta);
+    resultDelta.textContent = fmtScore(state.score);
     resultTotal.textContent = fmtScore(state.score);
 
-    const easter = isAllThrees(state.score);
-    if (easter) {
+    const msgs = easterMessages(state.score);
+    if (msgs.length) {
       resultEaster.hidden = false;
-      resultEaster.textContent =
-        `Счет ${Math.abs(state.score)}: отсылка на Макса Ферстаппена (его номер 33).`;
+      if (msgs[0] === "TU TU TU DU MAX VERSTAPPEN") {
+        resultEaster.classList.add("result__easter--max");
+      } else {
+        resultEaster.classList.remove("result__easter--max");
+      }
+      resultEaster.textContent = msgs.join(" ");
     } else {
       resultEaster.hidden = true;
+      resultEaster.classList.remove("result__easter--max");
       resultEaster.textContent = "";
     }
 
@@ -354,7 +393,6 @@ async function main() {
     const id = `${active.catIndex}:${active.qIndex}`;
     state.used[id] = active.value;
     saveState(mode, state);
-    pendingCatCheck = active.catIndex;
     modal.close();
   });
 
@@ -364,23 +402,17 @@ async function main() {
     const id = `${active.catIndex}:${active.qIndex}`;
     state.used[id] = -active.value;
     saveState(mode, state);
-    pendingCatCheck = active.catIndex;
     modal.close();
   });
 
   modal.addEventListener("close", () => {
     active = null;
     buildBoard(boardEl, quiz, state, openQuestion);
-
-    if (pendingCatCheck !== null) {
-      const idx = pendingCatCheck;
-      pendingCatCheck = null;
-      const m = categoryMetrics(idx);
-      if (m.total > 0 && m.answered === m.total && !state.completedCats[String(idx)]) {
-        state.completedCats[String(idx)] = true;
-        saveState(mode, state);
-        showCategoryResult(idx);
-      }
+    const m = gameMetrics();
+    if (m.total > 0 && m.answered === m.total && !state.completedGame) {
+      state.completedGame = true;
+      saveState(mode, state);
+      showGameResult();
     }
   });
 
@@ -397,7 +429,7 @@ async function main() {
     localStorage.removeItem(stateKey(mode));
     state.score = 0;
     state.used = {};
-    state.completedCats = {};
+    state.completedGame = false;
     scoreValue.textContent = fmtScore(0);
     buildBoard(boardEl, quiz, state, openQuestion);
   });
@@ -410,3 +442,4 @@ async function main() {
 }
 
 main();
+

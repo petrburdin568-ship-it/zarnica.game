@@ -66,7 +66,7 @@
     <dialog class="modal modal--result" id="resultModal">
       <form method="dialog" class="modal__surface result">
         <div class="result__head">
-          <div class="result__kicker">Раздел пройден</div>
+          <div class="result__kicker">Режим пройден</div>
           <div class="result__title" id="resultCat">—</div>
         </div>
 
@@ -78,11 +78,11 @@
               <div class="result__statValue" id="resultCount">0/0</div>
             </div>
             <div class="result__stat">
-              <div class="result__statLabel">Очки за раздел</div>
+              <div class="result__statLabel">Итоговые очки</div>
               <div class="result__statValue" id="resultDelta">0</div>
             </div>
             <div class="result__stat">
-              <div class="result__statLabel">Общий счет</div>
+              <div class="result__statLabel">Счет</div>
               <div class="result__statValue" id="resultTotal">0</div>
             </div>
           </div>
@@ -95,6 +95,8 @@
         </div>
       </form>
     </dialog>
+
+    <div class="toast" id="toast" aria-live="polite" aria-atomic="true" hidden></div>
 
     <script src="./app.js"></script>
   </body>
