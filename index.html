@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Зарница</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="bg"></div>
+    <main class="shell shell--center">
+      <header class="hero">
+        <div class="hero__badge">Игра</div>
+        <h1 class="hero__title">Зарница</h1>
+        <p class="hero__subtitle">Выбери режим, чтобы открыть табло с вопросами.</p>
+      </header>
+
+      <section class="modeGrid" aria-label="Выбор режима">
+        <button class="modeCard" data-mode="mode1" type="button">
+          <div class="modeCard__kicker">Режим 1</div>
+          <div class="modeCard__title">История России</div>
+          <div class="modeCard__hint">Вопросы по истории</div>
+        </button>
+
+        <button class="modeCard" data-mode="mode2" type="button">
+          <div class="modeCard__kicker">Режим 2</div>
+          <div class="modeCard__title">Воинская слава</div>
+          <div class="modeCard__hint">Вопросы про армию и военное дело</div>
+        </button>
+      </section>
+
+      <footer class="footer">
+        <span class="footer__muted">Локальная версия, без интернета.</span>
+      </footer>
+    </main>
+
+    <script>
+      const cards = document.querySelectorAll("[data-mode]");
+      for (const btn of cards) {
+        btn.addEventListener("click", () => {
+          const mode = btn.getAttribute("data-mode");
+          if (!mode) return;
+          const url = new URL("./game.html", window.location.href);
+          url.searchParams.set("mode", mode);
+          window.location.href = url.toString();
+        });
+      }
+    </script>
+  </body>
+</html>

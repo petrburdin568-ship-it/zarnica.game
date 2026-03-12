@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Зарница | Табло</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="bg"></div>
+    <main class="shell">
+      <header class="topbar">
+        <a class="topbar__back" href="./index.html" aria-label="На главную">←</a>
+        <div class="topbar__title">
+          <div class="topbar__label">Табло</div>
+          <div class="topbar__mode" id="modeTitle">Загрузка…</div>
+        </div>
+        <div class="topbar__score">
+          <div class="score__label">Счет</div>
+          <div class="score__value" id="scoreValue">0</div>
+        </div>
+      </header>
+
+      <section class="boardWrap" aria-label="Игровое табло">
+        <div class="board" id="board"></div>
+      </section>
+
+      <section class="controls">
+        <button class="btn btn--ghost" id="resetBtn" type="button">Новая игра</button>
+        <button class="btn btn--ghost" id="homeBtn" type="button">Сменить режим</button>
+      </section>
+    </main>
+
+    <dialog class="modal" id="qModal">
+      <form method="dialog" class="modal__surface" id="modalSurface">
+        <div class="modal__head">
+          <div class="modal__meta">
+            <div class="modal__cat" id="modalCat"></div>
+            <div class="modal__value" id="modalValue"></div>
+          </div>
+          <button class="iconBtn" value="cancel" aria-label="Закрыть" type="submit">✕</button>
+        </div>
+
+        <div class="modal__body">
+          <div class="qText" id="modalQ"></div>
+          <div class="options" id="modalOptions"></div>
+
+          <div class="answerWrap" id="answerWrap" hidden>
+            <div class="answerLabel">Ответ</div>
+            <div class="answerText" id="modalA"></div>
+          </div>
+        </div>
+
+        <div class="modal__foot">
+          <div class="modal__left">
+            <button class="btn btn--gold" id="revealBtn" type="button">Показать ответ</button>
+          </div>
+          <div class="modal__right">
+            <button class="btn" id="minusBtn" type="button">-</button>
+            <button class="btn" id="plusBtn" type="button">+</button>
+          </div>
+        </div>
+      </form>
+    </dialog>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
