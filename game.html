@@ -63,6 +63,39 @@
       </form>
     </dialog>
 
+    <dialog class="modal modal--result" id="resultModal">
+      <form method="dialog" class="modal__surface result">
+        <div class="result__head">
+          <div class="result__kicker">Раздел пройден</div>
+          <div class="result__title" id="resultCat">—</div>
+        </div>
+
+        <div class="result__body">
+          <div class="result__badge" id="resultAch">Достижение</div>
+          <div class="result__stats">
+            <div class="result__stat">
+              <div class="result__statLabel">Вопросов</div>
+              <div class="result__statValue" id="resultCount">0/0</div>
+            </div>
+            <div class="result__stat">
+              <div class="result__statLabel">Очки за раздел</div>
+              <div class="result__statValue" id="resultDelta">0</div>
+            </div>
+            <div class="result__stat">
+              <div class="result__statLabel">Общий счет</div>
+              <div class="result__statValue" id="resultTotal">0</div>
+            </div>
+          </div>
+
+          <div class="result__easter" id="resultEaster" hidden></div>
+        </div>
+
+        <div class="result__foot">
+          <button class="btn btn--gold" value="ok" type="submit">Продолжить</button>
+        </div>
+      </form>
+    </dialog>
+
     <script src="./app.js"></script>
   </body>
 </html>
